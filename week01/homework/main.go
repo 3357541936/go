@@ -7,16 +7,6 @@ import (
 
 func main() {
 	var slice01 []int = []int{1, 2, 3, 4, 5}
-
-	println("------------")
-	println(len(slice01))
-	println(cap(slice01))
-
-	var res = util.Remove(slice01, 3)
+	var res = util.RemoveB(slice01, 4)
 	fmt.Println(res)
-
-	println("------------")
-	println(len(slice01))
-	println(cap(slice01))
-
 }
