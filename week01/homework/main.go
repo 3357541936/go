@@ -2,11 +2,16 @@ package main
 
 import (
 	"example.com/go/week01/homework/util"
-	"fmt"
 )
 
 func main() {
-	var slice01 []int = []int{1, 2, 3, 4, 5}
-	var res = util.RemoveB(slice01, 4)
-	fmt.Println(res)
+	var s []int = []int{0, 1, 2, 3, 4, 5, 6, 7}
+	s = util.RemoveC(s, 0)
+	s = util.RemoveC(s, 0)
+	s = util.RemoveC(s, 0)
+	s = util.RemoveC(s, 0)
+	s = util.RemoveC(s, 7)
+	s = util.RemoveC(s, 0)
+	s = util.RemoveC(s, 8)
+
 }
