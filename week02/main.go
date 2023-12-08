@@ -46,9 +46,9 @@ func initWebServer() *gin.Engine {
 	engine := gin.Default()
 	engine.Use(cors.New(cors.Config{
 		AllowAllOrigins: true,
-		AllowOriginFunc: func(origin string) bool {
-			return true
-		},
+		//AllowOriginFunc: func(origin string) bool {
+		//	return true
+		//},
 		MaxAge: 12 * time.Hour,
 	}), func(context *gin.Context) {
 		println("跨域功能开启!")

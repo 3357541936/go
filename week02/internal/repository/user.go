@@ -10,9 +10,9 @@ type UserRepository struct {
 	dao *dao.UserDAO
 }
 
-func NewUserRepository(dao *dao.UserDAO) *UserRepository {
+func NewUserRepository(ud *dao.UserDAO) *UserRepository {
 	return &UserRepository{
-		dao: dao,
+		dao: ud,
 	}
 }
 
