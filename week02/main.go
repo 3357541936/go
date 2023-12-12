@@ -2,10 +2,13 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"time"
+	"week02.com/internal/middleware/login"
 	"week02.com/internal/repository"
 	"week02.com/internal/repository/dao"
 	"week02.com/internal/service"
@@ -46,16 +49,16 @@ func initWebServer() *gin.Engine {
 	engine := gin.Default()
 	engine.Use(cors.New(cors.Config{
 		AllowAllOrigins: true,
-		//AllowOriginFunc: func(origin string) bool {
-		//	return true
-		//},
-		MaxAge: 12 * time.Hour,
+		MaxAge:          12 * time.Hour,
 	}), func(context *gin.Context) {
 		println("跨域功能开启!")
-		// Gin 的 middleware 机制可以做到很多事情,
 		// Web 治理: 熔断, 限流, 降级
 		// 可观测性: 日志, metrics, tracing
 		// 身份认证与鉴权等
 	})
+
+	loginCheck := &login.MiddlewareBuilder{}
+	store := cookie.NewStore([]byte("secret"))
+	engine.Use(sessions.Sessions("ssid", store), loginCheck.CheckLogin())
 	return engine
 }
