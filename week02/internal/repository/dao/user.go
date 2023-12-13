@@ -17,11 +17,14 @@ type UserDAO struct {
 
 // 数据库字段
 type User struct {
-	Id       int64  `gorm:"primaryKey,autoIncrement"`
-	Email    string `gorm:"unique"`
-	Password string
-	CTime    int64
-	UTime    int64
+	Id          int64  `gorm:"primaryKey,autoIncrement"`
+	Email       string `gorm:"unique"`
+	Password    string
+	Name        string
+	Birth       int64
+	Description string
+	CTime       int64
+	UTime       int64
 }
 
 func NewUserDao(db *gorm.DB) *UserDAO {
@@ -50,11 +53,12 @@ func (ud *UserDAO) Insert(context context.Context, u User) error {
 	return err
 }
 
-func (ud *UserDAO) Update(context context.Context, u User) error {
+func (ud *UserDAO) UpdateById(context context.Context, u User) error {
 	db_u := User{
-		Email:    u.Email,
-		Password: u.Password,
-		UTime:    time.Now().UnixMilli(),
+		Birth:       u.Birth,
+		Name:        u.Name,
+		Description: u.Description,
+		UTime:       time.Now().UnixMilli(),
 	}
 	return ud.db.Updates(&User{}).Where("id=?", u.Id).Updates(db_u).Error
 }

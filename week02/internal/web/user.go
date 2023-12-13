@@ -4,6 +4,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 	"week02.com/internal/domain"
 	"week02.com/internal/service"
 )
@@ -24,8 +25,10 @@ func (s *UserHandler) CreateRouter(server *gin.Engine) {
 	group.POST("/login", s.login)
 	// 用户注册接口
 	group.POST("/signup", s.signup)
-	// 用户编辑接口
+	// 用户补充基本信息接口
 	group.POST("/edit", s.edit)
+	// 用户修改基本信息接口
+	group.POST("/profile", s.profile)
 }
 
 func (s *UserHandler) signup(context *gin.Context) {
@@ -90,22 +93,57 @@ func (s *UserHandler) login(context *gin.Context) {
 
 func (s *UserHandler) edit(context *gin.Context) {
 	type EditData struct {
-		Id            int64  `json:"id"`
-		Username      string `json:"username"`
-		Password      string `json:"password"`
-		CheckPassword string `json:"checkPassword"`
+		Id          int64  `json:"id"`
+		Name        string `json:"name"`
+		Birth       string `json:"birth"`
+		Description string `json:"description"`
 	}
 	var requestData EditData
 	if err := context.Bind(&requestData); err != nil {
 		return
 	}
-	if requestData.Password != requestData.CheckPassword {
-		context.String(http.StatusOK, "两次密码输入不一致")
+
+	if requestData.Name == "" || requestData.Birth == "" || requestData.Description == "" {
+		context.String(http.StatusOK, "提交信息中存在未填写项")
+		return
 	}
+	timeParse, _ := time.Parse("2006-01-02 15:05:04", requestData.Birth)
 	err := s.service.Edit(context, domain.User{
-		Id:       requestData.Id,
-		Email:    requestData.Username,
-		Password: requestData.Password,
+		Id:          requestData.Id,
+		Name:        requestData.Name,
+		Birth:       timeParse.UnixMilli(),
+		Description: requestData.Description,
+	})
+	switch err {
+	case nil:
+		context.String(http.StatusOK, "个人信息修改成功")
+	default:
+		context.String(http.StatusOK, "系统出错,请联系管理员!")
+	}
+}
+
+func (s *UserHandler) profile(context *gin.Context) {
+	type ProfileData struct {
+		Id          int64  `json:"id"`
+		Name        string `json:"name"`
+		Birth       string `json:"birth"`
+		Description string `json:"description"`
+	}
+	var requestData ProfileData
+	if err := context.Bind(&requestData); err != nil {
+		return
+	}
+
+	if requestData.Name == "" || requestData.Birth == "" || requestData.Description == "" {
+		context.String(http.StatusOK, "提交信息中存在未填写项")
+		return
+	}
+	timeParse, _ := time.Parse("2006-01-02 15:05:04", requestData.Birth)
+	err := s.service.Profile(context, domain.User{
+		Id:          requestData.Id,
+		Name:        requestData.Name,
+		Birth:       timeParse.UnixMilli(),
+		Description: requestData.Description,
 	})
 	switch err {
 	case nil:

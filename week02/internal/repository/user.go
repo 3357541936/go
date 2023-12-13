@@ -34,12 +34,21 @@ func (repo *UserRepository) FindByEmail(context context.Context, email string) (
 	return repo.toDomain(u), nil
 }
 
-func (repo *UserRepository) ChangeProfile(context context.Context, user domain.User) error {
+func (repo *UserRepository) EditProfile(context context.Context, user domain.User) error {
+	return repo.dao.UpdateById(context, dao.User{
+		Id:          user.Id,
+		Name:        user.Name,
+		Birth:       user.Birth,
+		Description: user.Description,
+	})
+}
 
-	return repo.dao.Update(context, dao.User{
-		Id:       user.Id,
-		Email:    user.Email,
-		Password: user.Password,
+func (repo *UserRepository) UpdateProfile(context context.Context, user domain.User) error {
+	return repo.dao.UpdateById(context, dao.User{
+		Id:          user.Id,
+		Name:        user.Name,
+		Birth:       user.Birth,
+		Description: user.Description,
 	})
 }
 

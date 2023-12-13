@@ -45,5 +45,9 @@ func (service *UserService) Login(context context.Context, email string, passwor
 }
 
 func (service *UserService) Edit(context context.Context, u domain.User) error {
-	return service.repo.ChangeProfile(context, u)
+	return service.repo.EditProfile(context, u)
+}
+
+func (service *UserService) Profile(context context.Context, u domain.User) error {
+	return service.repo.UpdateProfile(context, u)
 }
