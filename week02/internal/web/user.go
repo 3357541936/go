@@ -3,6 +3,7 @@ package web
 import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"time"
 	"week02.com/internal/domain"
@@ -13,6 +14,13 @@ type UserHandler struct {
 	service *service.UserService
 }
 
+type UserClaims struct {
+	jwt.RegisteredClaims
+	uid int64
+}
+
+var SignedKey = []byte("kEUuGqea3ADEk05zwBm5gOPd6x4SGyHO")
+
 func NewUserHandler(service *service.UserService) *UserHandler {
 	return &UserHandler{
 		service: service,
@@ -22,7 +30,7 @@ func NewUserHandler(service *service.UserService) *UserHandler {
 func (s *UserHandler) CreateRouter(server *gin.Engine) {
 	group := server.Group("/user")
 	// 用户登录接口
-	group.POST("/login", s.login)
+	group.POST("/login", s.loginJWT)
 	// 用户注册接口
 	group.POST("/signup", s.signup)
 	// 用户补充基本信息接口
@@ -62,6 +70,52 @@ func (s *UserHandler) signup(context *gin.Context) {
 	}
 }
 
+func (s *UserHandler) loginJWT(context *gin.Context) {
+	type LoginData struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	var requestData LoginData
+	if err := context.Bind(&requestData); err != nil {
+		return
+	}
+	u, err := s.service.Login(context, requestData.Username, requestData.Password)
+	switch err {
+	case nil:
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, UserClaims{
+			uid: u.Id,
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 15)),
+			},
+		})
+		tokenStr, err := token.SignedString(SignedKey)
+		if err != nil {
+			context.String(http.StatusOK, "系统出错!")
+			return
+		}
+		context.Header("x-jwt-token", tokenStr)
+		// 登录成功
+		type Obj struct {
+			Id          int64  `json:"id"`
+			Email       string `json:"email"`
+			Name        string `json:"name"`
+			Birth       int64  `json:"birth"`
+			Description string `json:"description"`
+		}
+		context.JSON(http.StatusOK, &Obj{
+			Id:          u.Id,
+			Email:       u.Email,
+			Name:        u.Name,
+			Birth:       u.Birth,
+			Description: u.Description,
+		})
+	case service.ErrInvailidEmailOrPassword:
+		context.String(http.StatusOK, "您的邮箱或密码无效!")
+	default:
+		context.String(http.StatusOK, "系统出错, 请联系管理员!")
+	}
+}
+
 func (s *UserHandler) login(context *gin.Context) {
 	type LoginData struct {
 		Username string `json:"username"`
@@ -82,8 +136,22 @@ func (s *UserHandler) login(context *gin.Context) {
 		err := sess.Save()
 		if err != nil {
 			context.String(http.StatusOK, "系统出错, 请联系管理员!")
+			return
 		}
-		context.String(http.StatusOK, "登录成功!")
+		type Obj struct {
+			Id          int64  `json:"id"`
+			Email       string `json:"email"`
+			Name        string `json:"name"`
+			Birth       int64  `json:"birth"`
+			Description string `json:"description"`
+		}
+		context.JSON(http.StatusOK, &Obj{
+			Id:          u.Id,
+			Email:       u.Email,
+			Name:        u.Name,
+			Birth:       u.Birth,
+			Description: u.Description,
+		})
 	case service.ErrInvailidEmailOrPassword:
 		context.String(http.StatusOK, "您的邮箱或密码无效!")
 	default:
@@ -102,6 +170,10 @@ func (s *UserHandler) edit(context *gin.Context) {
 	if err := context.Bind(&requestData); err != nil {
 		return
 	}
+	//sess := sessions.Default(context)
+	//uid := sess.Get("userId")
+
+	user := context.MustGet("user").(UserClaims)
 
 	if requestData.Name == "" || requestData.Birth == "" || requestData.Description == "" {
 		context.String(http.StatusOK, "提交信息中存在未填写项")
@@ -109,7 +181,7 @@ func (s *UserHandler) edit(context *gin.Context) {
 	}
 	timeParse, _ := time.Parse("2006-01-02 15:05:04", requestData.Birth)
 	err := s.service.Edit(context, domain.User{
-		Id:          requestData.Id,
+		Id:          user.uid,
 		Name:        requestData.Name,
 		Birth:       timeParse.UnixMilli(),
 		Description: requestData.Description,
@@ -134,13 +206,16 @@ func (s *UserHandler) profile(context *gin.Context) {
 		return
 	}
 
+	//sess := sessions.Default(context)
+	//uid := sess.Get("userId")
+	user := context.MustGet("user").(UserClaims)
 	if requestData.Name == "" || requestData.Birth == "" || requestData.Description == "" {
 		context.String(http.StatusOK, "提交信息中存在未填写项")
 		return
 	}
 	timeParse, _ := time.Parse("2006-01-02 15:05:04", requestData.Birth)
 	err := s.service.Profile(context, domain.User{
-		Id:          requestData.Id,
+		Id:          user.uid,
 		Name:        requestData.Name,
 		Birth:       timeParse.UnixMilli(),
 		Description: requestData.Description,

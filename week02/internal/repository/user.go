@@ -54,7 +54,11 @@ func (repo *UserRepository) UpdateProfile(context context.Context, user domain.U
 
 func (repo *UserRepository) toDomain(u dao.User) domain.User {
 	return domain.User{
-		Email:    u.Email,
-		Password: u.Password,
+		Id:          u.Id,
+		Email:       u.Email,
+		Password:    u.Password,
+		Name:        u.Name,
+		Birth:       u.Birth,
+		Description: u.Description,
 	}
 }
